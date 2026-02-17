@@ -1,0 +1,110 @@
+function sendEmailsWithAttachments() {
+  // 1. ตั้งค่าพื้นฐาน
+  // ระบุชื่อแท็บ "Sheet10" โดยตรง
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet10");
+  var startRow = 2; // เริ่มต้นที่แถว 2 (เพราะแถว 1 คือหัวตาราง)
+  var numRows = sheet.getLastRow() - 1; // จำนวนแถวที่มีข้อมูล
+  
+  // ID ของโฟลเดอร์ Google Drive ที่เก็บไฟล์ PDF
+  // ดึงมาจากลิงก์: https://drive.google.com/drive/folders/10f_Eym2N0v28gJENdM4sJmQ1ujbAy2Un
+  var folderId = "10f_Eym2N0v28gJENdM4sJmQ1ujbAy2Un";
+  
+  if (numRows < 1) {
+    Browser.msgBox("ไม่พบข้อมูลในตาราง");
+    return;
+  }
+
+  var dataRange = sheet.getRange(startRow, 1, numRows, 3); // อ่านข้อมูล Col A, B, C
+  var data = dataRange.getValues();
+  
+  // ดึงโฟลเดอร์
+  try {
+    var folder = DriveApp.getFolderById(folderId);
+  } catch (e) {
+    Browser.msgBox("ไม่พบโฟลเดอร์ กรุณาตรวจสอบ Folder ID");
+    return;
+  }
+
+  // 2. วนลูปส่งเมลทีละรายชื่อ
+  for (var i = 0; i < data.length; i++) {
+    var row = data[i];
+    var position = row[0]; // คอลัมน์ A: ตำแหน่ง (เรียน)
+    var company = row[1];  // คอลัมน์ B: ชื่อบริษัท (และชื่อไฟล์)
+    var emailAddress = row[2]; // คอลัมน์ C: อีเมล
+    
+    // ข้ามถ้าไม่มีอีเมลหรือชื่อบริษัท
+    if (!emailAddress || !company) {
+      console.log("ข้ามแถวที่ " + (i + 2) + " เนื่องจากข้อมูลไม่ครบ");
+      continue;
+    }
+
+    // 3. ค้นหาไฟล์แนบในโฟลเดอร์
+    var fileToSend = null;
+    
+    // ลองค้นหาไฟล์ที่ชื่อตรงกับชื่อบริษัทเป๊ะๆ
+    var files = folder.getFilesByName(company);
+    if (files.hasNext()) {
+      fileToSend = files.next();
+    } else {
+      // ถ้าไม่เจอ ลองเติม .pdf ต่อท้าย
+      files = folder.getFilesByName(company + ".pdf");
+      if (files.hasNext()) {
+        fileToSend = files.next();
+      }
+    }
+
+    // 4. เนื้อหาอีเมล (HTML Format เพื่อความสวยงามและเว้นบรรทัด)
+    var subject = "แจ้งกำหนดการนิเทศนักศึกษาสหกิจศึกษาครั้งที่ 1 MTA 2/68";
+    
+    var bodyHtml = `
+      เรียน ${position} ${company}<br><br>
+
+      ตามที่ ${company} ได้กรุณารับนักศึกษา<br>
+      หลักสูตรเทคโนโลยีมัลติมีเดีย แอนิเมชัน และเกม สำนักวิชาสารสนเทศศาสตร์<br>
+      เข้าปฏิบัติสหกิจศึกษาในหน่วยงานของท่าน<br><br>
+
+      ทั้งนี้ ศูนย์สหกิจศึกษาและพัฒนาอาชีพ มหาวิทยาลัยวลัยลักษณ์<br>
+      ขออนุญาตให้อาจารย์นิเทศเข้าพบนิเทศงานที่ปรึกษาและนักศึกษา<br>
+      เพื่อนิเทศการปฏิบัติงานของนักศึกษาและหารือเรื่องอื่นๆ ที่เกี่ยวข้อง<br>
+      โดยมีรายละเอียดตามไฟล์แนบ<br><br>
+
+      จึงเรียนมาเพื่อโปรดทราบ<br>
+      และกรุณาแจ้งพนักงานที่ปรึกษาและนักศึกษาให้ทราบด้วยจะขอบคุณยิ่ง<br><br>
+      --<br>
+      ขอแสดงความนับถือ<br>
+      นายพชร พงศ์ยี่ล่า<br>
+      เจ้าหน้าที่บริหารงานทั่วไป<br>
+      ฝ่ายสหกิจศึกษาและประสบการณ์ภาคสนาม ศูนย์สหกิจศึกษาและพัฒนาอาชีพ<br>
+      มหาวิทยาลัยวลัยลักษณ์<br>
+      โทร : 075476304, 0966359025<br>
+      เมล : patchara38616@gmail.com
+    `;
+
+    // 5. สั่งส่งอีเมล
+    try {
+      if (fileToSend) {
+        // กรณีเจอไฟล์แนบ
+        GmailApp.sendEmail(emailAddress, subject, "", {
+          htmlBody: bodyHtml,
+          attachments: [fileToSend.getAs(MimeType.PDF)], // บังคับเป็น PDF หรือใช้ fileToSend.getBlob()
+          name: "ศูนย์สหกิจศึกษา ม.วลัยลักษณ์" // ชื่อผู้ส่งที่แสดง
+        });
+        
+        // บันทึกสถานะลงใน Sheet (Optional: ถ้าต้องการให้เขียนว่า "ส่งแล้ว" ให้เอาคอมเมนต์บรรทัดล่างออก)
+        // sheet.getRange(startRow + i, 4).setValue("ส่งแล้ว: มีไฟล์แนบ");
+        console.log("ส่งเมลให้ " + company + " สำเร็จ (มีไฟล์แนบ)");
+        
+      } else {
+        // กรณีไม่เจอไฟล์แนบ (จะส่งเมลแจ้งเตือน หรือข้ามไป)
+        // ในที่นี้เลือกที่จะข้ามและแจ้งเตือนใน Log
+        console.log("ไม่พบไฟล์แนบสำหรับ: " + company + " (ข้ามการส่ง)");
+        // sheet.getRange(startRow + i, 4).setValue("Error: ไม่พบไฟล์");
+      }
+      
+    } catch (e) {
+      console.log("เกิดข้อผิดพลาดในการส่งหา " + company + ": " + e.message);
+    }
+  }
+  
+  Browser.msgBox("เสร็จสิ้นกระบวนการทำงาน");
+}

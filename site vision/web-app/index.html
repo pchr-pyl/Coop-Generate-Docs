@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบสร้างหนังสือแจ้งนิเทศ | มหาวิทยาลัยวลัยลักษณ์</title>
+    <meta name="description" content="ระบบสร้างหนังสือแจ้งนิเทศนักศึกษาสหกิจศึกษา มหาวิทยาลัยวลัยลักษณ์ อัปโหลด CSV สร้าง PDF อัตโนมัติ">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <!-- ===== HEADER ===== -->
+    <header class="header">
+        <div class="header-badge">🎓 ศูนย์สหกิจศึกษาและพัฒนาอาชีพ</div>
+        <h1>ระบบสร้างหนังสือแจ้งนิเทศ</h1>
+        <p>อัปโหลดข้อมูลนักศึกษา สร้าง PDF หนังสือแจ้งนิเทศอัตโนมัติ พร้อมดาวน์โหลดทันที</p>
+    </header>
+
+    <!-- ===== STEP 1: DOWNLOAD TEMPLATES ===== -->
+    <section class="step-card" id="step-1">
+        <div class="step-header">
+            <div class="step-number">1</div>
+            <div>
+                <div class="step-title">ดาวน์โหลดฟอร์มตัวอย่าง</div>
+                <div class="step-subtitle">ดาวน์โหลดแบบฟอร์ม CSV และหนังสือนิเทศตัวอย่าง</div>
+            </div>
+        </div>
+        
+        <div class="download-cards">
+            <div class="download-card" id="btn-download-csv">
+                <div class="icon">📊</div>
+                <div class="label">ฟอร์ม CSV ตัวอย่าง</div>
+                <div class="desc">ไฟล์ตัวอย่างสำหรับกรอกข้อมูลนักศึกษา</div>
+            </div>
+            <div class="download-card" id="btn-download-sample-pdf">
+                <div class="icon">📄</div>
+                <div class="label">หนังสือนิเทศตัวอย่าง</div>
+                <div class="desc">PDF ตัวอย่างหนังสือแจ้งนิเทศ</div>
+            </div>
+        </div>
+
+        <details class="column-guide">
+            <summary>📋 คำอธิบายคอลัมน์ในไฟล์ CSV</summary>
+            <div class="guide-list">
+                <div class="guide-item">
+                    <span class="col-name">ลำดับที่</span>
+                    <span class="col-desc">ลำดับที่ของนักศึกษา</span>
+                </div>
+                <div class="guide-item">
+                    <span class="col-name">รหัสนักศึกษา</span>
+                    <span class="col-desc">รหัสนักศึกษา เช่น 66117557</span>
+                </div>
+                <div class="guide-item">
+                    <span class="col-name">ชื่อ *</span>
+                    <span class="col-desc">ชื่อ-นามสกุล เช่น นายธนดล นนทเภท</span>
+                </div>
+                <div class="guide-item">
+                    <span class="col-name">เรียน *</span>
+                    <span class="col-desc">ตำแหน่งผู้รับหนังสือ เช่น ผู้จัดการฝ่ายทรัพยากรบุคคล</span>
+                </div>
+                <div class="guide-item">
+                    <span class="col-name">สถานประกอบการ *</span>
+                    <span class="col-desc">ชื่อสถานประกอบการ (ใช้จัดกลุ่มนักศึกษา)</span>
+                </div>
+                <div class="guide-item">
+                    <span class="col-name">อาจารย์ผู้นิเทศ *</span>
+                    <span class="col-desc">ชื่ออาจารย์ผู้นิเทศ</span>
+                </div>
+                <div class="guide-item">
+                    <span class="col-name">วันที่ *</span>
+                    <span class="col-desc">วันที่นิเทศ (รูปแบบ วัน/เดือน/ปี เช่น 3/2/2026)</span>
+                </div>
+                <div class="guide-item">
+                    <span class="col-name">เวลาเริ่ม *</span>
+                    <span class="col-desc">เวลาเริ่มนิเทศ เช่น 10:00</span>
+                </div>
+                <div class="guide-item">
+                    <span class="col-name">เวลาสิ้นสุด *</span>
+                    <span class="col-desc">เวลาสิ้นสุดนิเทศ เช่น 11:30</span>
+                </div>
+            </div>
+        </details>
+    </section>
+
+    <!-- ===== STEP 2: UPLOAD CSV ===== -->
+    <section class="step-card" id="step-2">
+        <div class="step-header">
+            <div class="step-number">2</div>
+            <div>
+                <div class="step-title">อัปโหลดข้อมูลนักศึกษา</div>
+                <div class="step-subtitle">อัปโหลดไฟล์ CSV ที่กรอกข้อมูลเรียบร้อยแล้ว</div>
+            </div>
+        </div>
+        
+        <div class="drop-zone" id="drop-zone">
+            <div class="drop-icon">📂</div>
+            <div class="drop-text">ลากไฟล์ CSV มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</div>
+            <div class="drop-hint">รองรับไฟล์ .csv (UTF-8)</div>
+        </div>
+        <input type="file" id="csv-file-input" accept=".csv">
+        <div id="file-name"></div>
+        <div id="upload-status"></div>
+        <div id="data-summary"></div>
+        <div id="data-preview"></div>
+    </section>
+
+    <!-- ===== STEP 3: GENERATE PDFs ===== -->
+    <section class="step-card" id="step-3" style="display: none;">
+        <div class="step-header">
+            <div class="step-number">3</div>
+            <div>
+                <div class="step-title">สร้างและดาวน์โหลด PDF</div>
+                <div class="step-subtitle">สร้างหนังสือแจ้งนิเทศ PDF สำหรับแต่ละสถานประกอบการ</div>
+            </div>
+        </div>
+        
+        <button class="btn btn-primary" id="btn-generate">
+            ⚡ สร้าง PDF ทั้งหมด
+        </button>
+        
+        <div id="progress-container">
+            <div class="progress-track">
+                <div id="progress-bar"></div>
+            </div>
+            <div id="progress-text"></div>
+        </div>
+        
+        <div id="results-list"></div>
+        
+        <div id="download-all-section">
+            <button class="btn btn-green" id="btn-download-all">
+                📦 ดาวน์โหลดทั้งหมด (ZIP)
+            </button>
+        </div>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer">
+        <p>ระบบสร้างหนังสือแจ้งนิเทศ © 2025 ศูนย์สหกิจศึกษาและพัฒนาอาชีพ มหาวิทยาลัยวลัยลักษณ์</p>
+    </footer>
+</div>
+
+<!-- Main App JS -->
+<script type="module" src="js/app.js"></script>
+
+</body>
+</html>
